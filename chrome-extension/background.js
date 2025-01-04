@@ -4,23 +4,66 @@ let blockedSites = [];
 const BACKEND_API_BASE = 'http://localhost:5000/api';
 const SAVE_INTERVAL = 60000; // Save every 60 seconds
 
-// Load blocked sites from backend
+// // Load blocked sites from the backend
+// const loadBlockedSites = async () => {
+//   try {
+//     const response = await fetch(`${BACKEND_API_BASE}/blocked-sites`);
+//     if (!response.ok) {
+//       throw new Error(`Failed to load blocked sites: ${response.statusText}`);
+//     }
+//     const data = await response.json();
+//     blockedSites = data;
+//     console.log('Blocked sites loaded:', blockedSites);
+//     updateBlockedSitesRules();
+//   } catch (error) {
+//     console.error('Error loading blocked sites:', error);
+//   }
+// };
+
+
+// Fetch blocked sites from backend and save to local storage
 const loadBlockedSites = async () => {
   try {
     const response = await fetch(`${BACKEND_API_BASE}/blocked-sites`);
     if (!response.ok) {
-      throw new Error('Network response was not ok');
+      throw new Error(`Failed to load blocked sites: ${response.statusText}`);
     }
     const data = await response.json();
-    blockedSites = data;
-    console.log('Blocked sites loaded:', blockedSites);
-    updateBlockedSitesRules();
+    const blockedSites = data;
+
+    // Save to local storage
+    chrome.storage.local.set({ blockedSites }, () => {
+      console.log('Blocked sites saved to local storage:', blockedSites);
+    });
+
+    // Update blocking rules
+    updateBlockedSitesRules(blockedSites);
   } catch (error) {
-    console.error('Failed to load blocked sites:', error);
+    console.error('Error loading blocked sites:', error);
   }
 };
 
-// Update blocked sites rules
+// Update Chrome blocking rules (optional: if using declarativeNetRequest)
+// const updateBlockedSitesRules = (blockedSites) => {
+//   // Example: Use Chrome declarativeNetRequest API
+//   const rules = blockedSites.map((site, id) => ({
+//     id: id + 1,
+//     priority: 1,
+//     action: { type: 'block' },
+//     condition: { urlFilter: site.site },
+//   }));
+
+//   chrome.declarativeNetRequest.updateDynamicRules({
+//     addRules: rules,
+//     removeRuleIds: rules.map(rule => rule.id),
+//   });
+// };
+
+// // Load blocked sites initially
+// loadBlockedSites();
+
+
+// Update rules for blocked sites
 const updateBlockedSitesRules = () => {
   const rules = blockedSites.map((site, index) => {
     try {
@@ -28,41 +71,45 @@ const updateBlockedSitesRules = () => {
       return {
         id: index + 1,
         priority: 1,
-        action: { 
-          type: 'redirect', 
-          redirect: { url: chrome.runtime.getURL('blocked.html') } 
+        action: {
+          type: 'redirect',
+          redirect: { url: chrome.runtime.getURL('blocked.html') }
         },
-        condition: { 
-          urlFilter: `*://${hostname}/*`, 
-          resourceTypes: ["main_frame"] 
+        condition: {
+          urlFilter: `*://${hostname}/*`,
+          resourceTypes: ['main_frame']
         }
       };
     } catch (e) {
       console.error(`Invalid URL for blocked site: ${site.site}`, e);
       return null;
     }
-  }).filter(rule => rule !== null);
+  }).filter(Boolean); // Filter out null rules
 
-  chrome.declarativeNetRequest.updateDynamicRules({
-    removeRuleIds: blockedSites.map((_, index) => index + 1),
-    addRules: rules
-  }, () => {
-    if (chrome.runtime.lastError) {
-      console.error('Failed to update rules:', chrome.runtime.lastError);
-    } else {
-      console.log('Dynamic rules updated successfully');
+  chrome.declarativeNetRequest.updateDynamicRules(
+    {
+      removeRuleIds: blockedSites.map((_, index) => index + 1),
+      addRules: rules
+    },
+    () => {
+      if (chrome.runtime.lastError) {
+        console.error('Error updating dynamic rules:', chrome.runtime.lastError);
+      } else {
+        console.log('Dynamic rules updated successfully');
+      }
     }
-  });
+  );
 };
 
-// Save time spent on sites to backend
+// Save time spent on sites to the backend
 const saveTimeSpent = async () => {
+  const timeSpentData = Object.keys(timeSpent).map(site => ({
+    site,
+    duration: timeSpent[site]
+  }));
+
   try {
-    const timeSpentData = Object.keys(timeSpent).map(site => ({
-      site,
-      duration: timeSpent[site]
-    }));
-    console.log('Saving time spent data:', JSON.stringify(timeSpentData, null, 2)); // Detailed logging
+    console.log('Saving time spent data:', JSON.stringify(timeSpentData, null, 2));
     const response = await fetch(`${BACKEND_API_BASE}/time-tracking`, {
       method: 'POST',
       headers: {
@@ -70,12 +117,13 @@ const saveTimeSpent = async () => {
       },
       body: JSON.stringify(timeSpentData)
     });
+
     if (!response.ok) {
       throw new Error(`Failed to save time spent: ${response.statusText}`);
     }
     console.log('Time spent data saved successfully');
   } catch (error) {
-    console.error('Failed to save time spent:', error);
+    console.error('Error saving time spent:', error);
   }
 };
 
@@ -83,64 +131,70 @@ const saveTimeSpent = async () => {
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
   const tab = await chrome.tabs.get(activeInfo.tabId);
   if (tab.url) {
-    let hostname = new URL(tab.url).hostname;
+    const hostname = new URL(tab.url).hostname;
     console.log(`Active tab changed to: ${hostname}`);
     activeTab = hostname;
-    if (!timeSpent[hostname]) {
-      timeSpent[hostname] = 0;
-    }
+    timeSpent[hostname] = timeSpent[hostname] || 0;
   }
 });
 
-// Monitor time on active sites
+// Track time spent on active sites
 setInterval(() => {
   if (activeTab) {
     timeSpent[activeTab] = (timeSpent[activeTab] || 0) + 1;
     console.log(`Time spent on ${activeTab}: ${timeSpent[activeTab]} seconds`);
   }
-}, 1000); // Update every second
+}, 1000);
 
-// Save time spent data at regular intervals
+// Periodically save time spent data
 setInterval(saveTimeSpent, SAVE_INTERVAL);
 
-// Listen for messages from popup.js and blocked.html
+// Handle messages from popup.js or blocked.html
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Received message:', message);
+
   if (message.action === 'getTimeSpent') {
     sendResponse(timeSpent);
   } else if (message.action === 'addBlockedSite') {
-    blockedSites.push({ site: message.site });
-    console.log('Adding blocked site:', message.site);
-    saveBlockedSiteToBackend(message.site).then(() => {
-      loadBlockedSites().then(() => {
-        sendResponse({ success: true });
-      }).catch(error => {
-        console.error('Failed to load blocked sites:', error);
-        sendResponse({ success: false });
-      });
-    }).catch(error => {
-      console.error('Failed to save blocked site:', error);
-      sendResponse({ success: false });
-    });
+    handleAddBlockedSite(message.site, sendResponse);
   } else if (message.action === 'removeBlockedSite') {
-    blockedSites = blockedSites.filter(site => new URL(site.site).hostname !== message.site);
-    console.log('Removing blocked site:', message.site);
-    removeBlockedSiteFromBackend(message.site).then(() => {
-      loadBlockedSites().then(() => {
-        sendResponse({ success: true });
-      }).catch(error => {
-        console.error('Failed to load blocked sites:', error);
-        sendResponse({ success: false });
-      });
-    }).catch(error => {
-      console.error('Failed to remove blocked site:', error);
-      sendResponse({ success: false });
-    });
+    handleRemoveBlockedSite(message.site, sendResponse);
   }
-  return true; // Keep the message channel open for sendResponse
+
+  return true; // Keep the message channel open for asynchronous response
 });
 
-// Sync blocked site with the backend
+// Add a blocked site
+const handleAddBlockedSite = async (site, sendResponse) => {
+  try {
+    blockedSites.push({ site });
+    console.log('Adding blocked site:', site);
+
+    await saveBlockedSiteToBackend(site);
+    await loadBlockedSites();
+    sendResponse({ success: true });
+  } catch (error) {
+    console.error('Error adding blocked site:', error);
+    sendResponse({ success: false });
+  }
+};
+
+// Remove a blocked site
+const handleRemoveBlockedSite = async (site, sendResponse) => {
+  try {
+    blockedSites = blockedSites.filter(s => new URL(s.site).hostname !== site);
+    console.log('Removing blocked site:', site);
+
+    await removeBlockedSiteFromBackend(site);
+    await loadBlockedSites();
+    sendResponse({ success: true });
+  } catch (error) {
+    console.error('Error removing blocked site:', error);
+    sendResponse({ success: false });
+  }
+};
+
+// Save blocked site to backend
 const saveBlockedSiteToBackend = async (site) => {
   try {
     await fetch(`${BACKEND_API_BASE}/blocked-sites`, {
@@ -151,12 +205,12 @@ const saveBlockedSiteToBackend = async (site) => {
       body: JSON.stringify({ site })
     });
   } catch (error) {
-    console.error('Failed to save blocked site:', error);
+    console.error('Error saving blocked site:', error);
     throw error;
   }
 };
 
-// Sync blocked site removal with the backend
+// Remove blocked site from backend
 const removeBlockedSiteFromBackend = async (site) => {
   try {
     await fetch(`${BACKEND_API_BASE}/blocked-sites`, {
@@ -167,14 +221,13 @@ const removeBlockedSiteFromBackend = async (site) => {
       body: JSON.stringify({ site })
     });
   } catch (error) {
-    console.error('Failed to remove blocked site:', error);
+    console.error('Error removing blocked site:', error);
     throw error;
   }
 };
 
-// Initialize the extension
+// Initialize extension
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Extension installed');
   loadBlockedSites();
-  updateBlockedSitesRules(); // Ensure rules are updated on installation
 });

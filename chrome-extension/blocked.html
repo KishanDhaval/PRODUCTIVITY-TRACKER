@@ -1,61 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Site Blocked</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        text-align: center;
-        padding: 50px;
-      }
-      h1 {
-        color: #ff0000;
-      }
-      p {
-        font-size: 18px;
-      }
-      .container {
-        max-width: 600px;
-        margin: 0 auto;
-      }
-      .button {
-        display: inline-block;
-        padding: 10px 20px;
-        margin-top: 20px;
-        font-size: 16px;
-        color: #fff;
-        background-color: #007bff;
-        border: none;
-        border-radius: 5px;
-        text-decoration: none;
-        cursor: pointer;
-      }
-      .button:hover {
-        background-color: #0056b3;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <h1>Site Blocked</h1>
-      <p>This site has been blocked by the Productivity Tracker extension to help you stay focused and increase your productivity.</p>
-      <button id="unblockButton" class="button">Unblock Site</button>
-      <a href="chrome-extension://__MSG_@@extension_id__/popup/popup.html" class="button">Go to Dashboard</a>
-    </div>
-    <script>
-      document.getElementById('unblockButton').addEventListener('click', () => {
-        const site = new URL(document.referrer).hostname;
-        chrome.runtime.sendMessage({ action: 'removeBlockedSite', site }, (response) => {
-          if (response.success) {
-            alert(`Site ${site} unblocked successfully.`);
-            window.location.href = document.referrer;
-          } else {
-            alert('Failed to unblock site.');
-          }
-        });
-      });
-    </script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Site Blocked</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 50px;
+    }
+    h1 {
+      color: #ff0000;
+    }
+    p {
+      font-size: 18px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .button {
+      display: inline-block;
+      padding: 10px 20px;
+      margin-top: 20px;
+      font-size: 16px;
+      color: #fff;
+      background-color: #007bff;
+      border: none;
+      border-radius: 5px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Site Blocked</h1>
+    <p id="blockedSiteMessage">This site has been blocked to help you stay focused and increase your productivity.</p>
+    <button id="unblockButton" class="button">Unblock Site</button>
+    <a href="chrome-extension://kaneiacemgkkbdoccoemmcbdgifkmlip/popup/popup.html" class="button">Go to Dashboard</a>
+    <a href="http://localhost:5173" class="button">Go to Dashboard2</a>
+  </div>
+
+  <script src="unblock.js"></script>
+</body>
 </html>

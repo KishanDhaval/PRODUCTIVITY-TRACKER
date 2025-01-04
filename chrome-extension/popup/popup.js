@@ -1,19 +1,18 @@
 document.addEventListener('DOMContentLoaded', function () {
   const timeList = document.getElementById('timeList');
   const clearButton = document.getElementById('clearButton');
-  const siteInput = document.getElementById('blockedSiteInput'); // Corrected ID
-  const blockButton = document.getElementById('saveBlockedSite'); // Corrected ID
-  const reportButton = document.getElementById('reportButton'); // New button for generating reports
-
+  const siteInput = document.getElementById('blockedSiteInput');
+  const blockButton = document.getElementById('saveBlockedSite');
+  const reportButton = document.getElementById('reportButton');
   const apiBaseUrl = "http://localhost:5000/api";
 
-  // Fetch and display the reports (time spent on websites)
-  fetch(`${apiBaseUrl}/productivity-report/reports`) // Updated to '/reports'
+  // Fetch and display productivity reports
+  fetch(`${apiBaseUrl}/productivity-report/reports`)
     .then(response => response.json())
     .then(data => {
       if (data.success) {
         data.reports.forEach((entry) => {
-          let listItem = document.createElement('li');
+          const listItem = document.createElement('li');
           listItem.textContent = `${entry.site}: ${entry.productiveTime} minutes productive, ${entry.distractingTime} minutes distracting`;
           timeList.appendChild(listItem);
         });
@@ -23,9 +22,9 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     .catch(err => console.error("Error:", err));
 
-  // Clear time data
+  // Clear productivity data
   clearButton.addEventListener('click', () => {
-    fetch(`${apiBaseUrl}/productivity-report/reports/clear`, { // Updated to '/reports/clear'
+    fetch(`${apiBaseUrl}/productivity-report/reports/clear`, {
       method: "POST",
     })
       .then(response => response.json())
@@ -40,55 +39,112 @@ document.addEventListener('DOMContentLoaded', function () {
       .catch(err => console.error("Error:", err));
   });
 
+  // Update blocked sites UI
+  const updateBlockedSitesListUI = (blockedSites) => {
+    const blockedSitesList = document.getElementById('blockedSitesList');
+    if (!blockedSitesList) return;
+
+    blockedSitesList.innerHTML = ''; // Clear the list
+
+    blockedSites.forEach((site, index) => {
+      const listItem = document.createElement('li');
+      const siteName = new URL(site).hostname;
+
+      listItem.innerHTML = `
+        <span>${siteName}</span>
+        <button data-index="${index}" title="Unblock this site">❌</button>
+      `;
+      blockedSitesList.appendChild(listItem);
+
+      listItem.querySelector('button').addEventListener('click', () => {
+        removeBlockedSite(site);
+      });
+    });
+  };
+
+  // Remove a blocked site
+  const removeBlockedSite = (site) => {
+    chrome.storage.local.get(['blockedSites'], (result) => {
+      let blockedSites = result.blockedSites || [];
+      blockedSites = blockedSites.filter(s => s !== site);
+
+      chrome.storage.local.set({ blockedSites }, () => {
+        console.log('Blocked site removed from local storage:', site);
+        updateBlockedSitesRules(blockedSites);
+      });
+    });
+  };
+
+  // Update blocking rules
+  const updateBlockedSitesRules = (blockedSites) => {
+    const rules = blockedSites.map((site, index) => ({
+      id: index + 1,
+      priority: 1,
+      action: { type: 'block' },
+      condition: { urlFilter: site, resourceTypes: ['main_frame'] },
+    }));
+
+    chrome.declarativeNetRequest.updateDynamicRules(
+      { removeRuleIds: Array.from({ length: 100 }, (_, i) => i + 1), addRules: rules },
+      () => {
+        if (chrome.runtime.lastError) {
+          console.error('Error updating rules:', chrome.runtime.lastError.message);
+        } else {
+          console.log('Blocking rules updated:', rules);
+        }
+      }
+    );
+  };
+
+  // Listen for changes in blocked sites
+  chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace === 'local' && changes.blockedSites) {
+      const newBlockedSites = changes.blockedSites.newValue || [];
+      updateBlockedSitesListUI(newBlockedSites);
+    }
+  });
+
+  // Initial load of blocked sites
+  chrome.storage.local.get(['blockedSites'], (result) => {
+    const blockedSites = result.blockedSites || [];
+    updateBlockedSitesListUI(blockedSites);
+  });
+
   // Block a site
   blockButton.addEventListener('click', () => {
     const site = siteInput.value.trim();
-    console.log(site);
-    
     if (site) {
       try {
         new URL(site); // Validate URL
-        fetch(`${apiBaseUrl}/blocked-sites`, { // Corrected to '/blocked-sites'
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ site }), // Only sending site info to block it
-        })
-          .then(response => response.json())
-          .then(data => {
-            if (data) { // Check if response contains data
+        chrome.storage.local.get(['blockedSites'], (result) => {
+          const blockedSites = result.blockedSites || [];
+          if (!blockedSites.includes(site)) {
+            blockedSites.push(site);
+            chrome.storage.local.set({ blockedSites }, () => {
+              updateBlockedSitesRules(blockedSites);
+              siteInput.value = ''; // Clear input
               alert(`Blocked ${site}`);
-              siteInput.value = ''; // Clear input after successful block
-              chrome.runtime.sendMessage({ action: 'addBlockedSite', site }, (response) => {
-                if (response.success) {
-                  console.log(`Site ${site} blocked successfully.`);
-                } else {
-                  alert("Failed to block site.");
-                }
-              });
-            } else {
-              alert("Failed to block site.");
-            }
-          })
-          .catch(err => console.error("Error:", err));
+            });
+          } else {
+            alert("Site is already blocked.");
+          }
+        });
       } catch (e) {
         alert("Invalid URL. Please enter a valid URL.");
       }
     }
   });
-  
 
-  // Generate and fetch a report
+  // Generate a productivity report
   reportButton.addEventListener('click', () => {
-    fetch(`${apiBaseUrl}/productivity-report/reports/report`) // Updated to '/reports/report'
-      .then(response => response.blob()) // Expecting a downloadable file (PDF or CSV)
+    fetch(`${apiBaseUrl}/productivity-report/reports/report`)
+      .then(response => response.blob())
       .then(blob => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = 'time_tracking_report.pdf'; // Name of the downloaded file
+        a.download = 'time_tracking_report.pdf';
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);

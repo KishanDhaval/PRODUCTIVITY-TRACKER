@@ -55,3 +55,23 @@ body {
     width: calc(100% - 10px);
   }
   
+
+  #blockedSitesList {
+    list-style-type: none;
+    padding: 0;
+  }
+  #blockedSitesList li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+  }
+  #blockedSitesList li span {
+    flex: 1;
+  }
+  #blockedSitesList li button {
+    background: none;
+    border: none;
+    color: red;
+    cursor: pointer;
+  }
