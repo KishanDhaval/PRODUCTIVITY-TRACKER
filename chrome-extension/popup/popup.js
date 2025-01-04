@@ -153,3 +153,50 @@ document.addEventListener('DOMContentLoaded', function () {
       .catch(err => console.error("Error fetching report:", err));
   });
 });
+// Tab Switching Logic
+document.querySelectorAll('.tabs li').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.style.display = 'none';
+    });
+    document.getElementById(tab.dataset.tab).style.display = 'block';
+
+    document.querySelectorAll('.tabs li').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+  });
+});
+
+// Example Data for Chart
+const ctx = document.getElementById('productivityChart').getContext('2d');
+const productivityData = {
+  labels: ['YouTube', 'Google', 'Reddit', 'GitHub'],
+  datasets: [
+    {
+      label: 'Productive Time (mins)',
+      data: [30, 45, 15, 60],
+      backgroundColor: 'green',
+    },
+    {
+      label: 'Distracting Time (mins)',
+      data: [120, 15, 90, 30],
+      backgroundColor: 'red',
+    },
+  ],
+};
+
+// Render Chart
+new Chart(ctx, {
+  type: 'bar',
+  data: productivityData,
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+    },
+  },
+});
+
+// Add Insights
+document.getElementById('mostProductiveSite').textContent = 'GitHub';
+document.getElementById('mostDistractingSite').textContent = 'YouTube';
+document.getElementById('totalTimeTracked').textContent = '375 mins';

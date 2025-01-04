@@ -1,77 +1,43 @@
+/* General Styling */
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    width: 200px;
-    height: 300px;
-  }
-  
-  .popup-container {
-    padding: 10px;
-    text-align: center;
-  }
-  
-  h1 {
-    font-size: 18px;
-  }
-  
-  .time-spent {
-    margin-bottom: 15px;
-  }
-  
-  #timeList {
-    list-style-type: none;
-    padding: 0;
-  }
-  
-  #timeList li {
-    margin-bottom: 5px;
-  }
-  
-  button {
-    padding: 5px 10px;
-    margin-top: 10px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    cursor: pointer;
-  }
-  
-  button:hover {
-    background-color: #45a049;
-  }
-  
-  .block-settings {
-    margin-top: 20px;
-  }
-  
-  #siteInput {
-    width: 100%;
-    padding: 5px;
-    margin-bottom: 5px;
-  }
-  
-  input[type="text"] {
-    width: calc(100% - 10px);
-  }
-  
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
 
-  #blockedSitesList {
-    list-style-type: none;
-    padding: 0;
-  }
-  #blockedSitesList li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px 0;
-  }
-  #blockedSitesList li span {
-    flex: 1;
-  }
-  #blockedSitesList li button {
-    background: none;
-    border: none;
-    color: red;
-    cursor: pointer;
-  }
+.popup-container {
+  padding: 10px;
+  width: 300px;
+}
+
+/* Tabs Styling */
+.tabs {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-bottom: 2px solid #ddd;
+}
+
+.tabs li {
+  flex: 1;
+  text-align: center;
+  padding: 8px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.tabs li.active {
+  font-weight: bold;
+  border-bottom: 2px solid blue;
+}
+
+/* Tab Content */
+.tab-content {
+  margin-top: 10px;
+}
+
+canvas {
+  max-width: 100%;
+  height: 200px;
+}

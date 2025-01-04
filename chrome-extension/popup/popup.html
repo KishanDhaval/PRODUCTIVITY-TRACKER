@@ -9,28 +9,49 @@
   <body>
     <div class="popup-container">
       <h1>Productivity Tracker</h1>
-      <div class="time-spent">
+
+      <!-- Tabs for Navigation -->
+      <ul class="tabs">
+        <li data-tab="time-spent" class="active">Time Spent</li>
+        <li data-tab="blocked-sites">Blocked Sites</li>
+        <li data-tab="productivity-report">Report</li>
+      </ul>
+
+      <!-- Time Spent Tab -->
+      <div class="tab-content" id="time-spent">
         <h2>Time Spent on Websites</h2>
         <ul id="timeList">
           <!-- List of time spent on websites will appear here -->
         </ul>
-      </div>
-      <button id="clearButton">Clear Time Data</button>
-
-      <h3>Block Sites</h3>
-      <div>
-        <input
-          type="text"
-          id="blockedSiteInput"
-          placeholder="Enter site to block"
-        />
-        <button id="saveBlockedSite">Block Site</button>
+        <button id="clearButton">Clear Time Data</button>
       </div>
 
-      <button id="reportButton">Generate Report</button> <!-- Added report button -->
-      <div id="blockedSitesContainer">
-        <h3>Blocked Sites</h3>
-        <ul id="blockedSitesList"></ul>
+      <!-- Blocked Sites Tab -->
+      <div class="tab-content" id="blocked-sites" style="display: none;">
+        <h3>Block Sites</h3>
+        <div>
+          <input
+            type="text"
+            id="blockedSiteInput"
+            placeholder="https://example.com"
+          />
+          <button id="saveBlockedSite">Block Site</button>
+        </div>
+        <div id="blockedSitesContainer">
+          <h3>Blocked Sites</h3>
+          <ul id="blockedSitesList"></ul>
+        </div>
+      </div>
+
+      <!-- Productivity Report Tab -->
+      <div class="tab-content" id="productivity-report" style="display: none;">
+        <h3>Productivity Report</h3>
+        <canvas id="productivityChart"></canvas>
+        <div id="keyInsights">
+          <p>Most Productive Site: <span id="mostProductiveSite">-</span></p>
+          <p>Most Distracting Site: <span id="mostDistractingSite">-</span></p>
+          <p>Total Time Tracked: <span id="totalTimeTracked">0 mins</span></p>
+        </div>
       </div>
     </div>
 
