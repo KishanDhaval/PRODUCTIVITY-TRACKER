@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "url": "chrome-extension://__MSG_@@extension_id__/blocked.html" 
+      }
+    },
+    "condition": {
+      "urlFilter": "*://*.example.com/*",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 2,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "url": "chrome-extension://__MSG_@@extension_id__/blocked.html" 
+      }
+    },
+    "condition": {
+      "urlFilter": "*://*.distractingsite.com/*",
+      "resourceTypes": ["main_frame"]
+    }
+  }
+]

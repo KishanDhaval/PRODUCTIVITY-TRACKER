@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Productivity Tracker</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="popup-container">
+      <h1>Productivity Tracker</h1>
+      <div class="time-spent">
+        <h2>Time Spent on Websites</h2>
+        <ul id="timeList">
+          <!-- List of time spent on websites will appear here -->
+        </ul>
+      </div>
+      <button id="clearButton">Clear Time Data</button>
+
+      <h3>Block Sites</h3>
+      <div>
+        <input
+          type="text"
+          id="blockedSiteInput"
+          placeholder="Enter site to block"
+        />
+        <button id="saveBlockedSite">Block Site</button>
+      </div>
+
+      <button id="reportButton">Generate Report</button> <!-- Added report button -->
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
