@@ -1,4 +1,20 @@
-productivity-tracker/
+# PRODUCTIVITY TRACKER
+
+"Compant": CODTECH IT SOLUTIONS
+
+"NAME" : KISHAN PRAJAPATI
+
+"INTERN ID" : CT12DRH
+
+"DOMAIN": MERN STACK
+
+"DURATION": 8 WEEKS
+
+"MENTER": NEELA SANTOSH
+
+
+
+```productivity-tracker/
 ├── chrome-extension/                     # Chrome Extension folder
 │   ├── manifest.json                     # Extension configuration file
 │   ├── background.js                     # Background script for time tracking and blocking sites
@@ -62,3 +78,4 @@ productivity-tracker/
                        # React environment variables (API base URL)
 │
 └── README.md                             # Project documentation
+```
