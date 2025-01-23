@@ -152,7 +152,75 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .catch(err => console.error("Error fetching report:", err));
   });
+
+  // Example Data for Display
+  const productivityData = {
+    labels: ['YouTube', 'Google', 'Reddit', 'GitHub'],
+    productiveTime: [30, 45, 15, 60],
+    distractingTime: [120, 15, 90, 30],
+  };
+
+  // Render Data
+  const dataContainer = document.getElementById('dataContainer');
+  productivityData.labels.forEach((label, index) => {
+    const dataItem = document.createElement('div');
+    dataItem.classList.add('data-item');
+    dataItem.innerHTML = `
+      <div class="site-name">${label}</div>
+      <div class="productive-time">Productive Time: ${productivityData.productiveTime[index]} mins</div>
+      <div class="distracting-time">Distracting Time: ${productivityData.distractingTime[index]} mins</div>
+    `;
+    dataContainer.appendChild(dataItem);
+  });
+
+  // Add Insights
+  document.getElementById('mostProductiveSite').textContent = 'GitHub';
+  document.getElementById('mostDistractingSite').textContent = 'YouTube';
+  document.getElementById('totalTimeTracked').textContent = '375 mins';
+
+  // Fetch and render time tracking data
+  const fetchTimeTrackingData = async (interval = 'day') => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/time-tracking?interval=${interval}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch time tracking data: ${response.statusText}`);
+      }
+      const data = await response.json();
+      renderTimeTrackingData(data);
+    } catch (error) {
+      console.error('Error fetching time tracking data:', error);
+    }
+  };
+
+  // Convert seconds to hours, minutes, and seconds format
+  const formatTime = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs}h ${mins}m ${secs}s`;
+  };
+
+  // Render time tracking data
+  const renderTimeTrackingData = (data) => {
+    const timeList = document.getElementById('timeList');
+    timeList.innerHTML = ''; // Clear existing data
+
+    data.forEach(({ site, duration }) => {
+      const listItem = document.createElement('li');
+      listItem.textContent = `${site}: ${formatTime(duration)}`;
+      timeList.appendChild(listItem);
+    });
+  };
+
+  // Fetch data on load
+  fetchTimeTrackingData();
+
+  // Event listener for interval selection
+  // document.getElementById('intervalSelect').addEventListener('change', (event) => {
+  //   fetchTimeTrackingData(event.target.value);
+  // });
 });
+
 // Tab Switching Logic
 document.querySelectorAll('.tabs li').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -165,38 +233,3 @@ document.querySelectorAll('.tabs li').forEach(tab => {
     tab.classList.add('active');
   });
 });
-
-// Example Data for Chart
-const ctx = document.getElementById('productivityChart').getContext('2d');
-const productivityData = {
-  labels: ['YouTube', 'Google', 'Reddit', 'GitHub'],
-  datasets: [
-    {
-      label: 'Productive Time (mins)',
-      data: [30, 45, 15, 60],
-      backgroundColor: 'green',
-    },
-    {
-      label: 'Distracting Time (mins)',
-      data: [120, 15, 90, 30],
-      backgroundColor: 'red',
-    },
-  ],
-};
-
-// Render Chart
-new Chart(ctx, {
-  type: 'bar',
-  data: productivityData,
-  options: {
-    responsive: true,
-    plugins: {
-      legend: { position: 'top' },
-    },
-  },
-});
-
-// Add Insights
-document.getElementById('mostProductiveSite').textContent = 'GitHub';
-document.getElementById('mostDistractingSite').textContent = 'YouTube';
-document.getElementById('totalTimeTracked').textContent = '375 mins';

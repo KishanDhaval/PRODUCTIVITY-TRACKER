@@ -2,7 +2,7 @@ let activeTab = null;
 let timeSpent = {};
 let blockedSites = [];
 const BACKEND_API_BASE = 'http://localhost:5000/api';
-const SAVE_INTERVAL = 60000; // Save every 60 seconds
+const SAVE_INTERVAL = 10000; 
 
 // // Load blocked sites from the backend
 // const loadBlockedSites = async () => {
