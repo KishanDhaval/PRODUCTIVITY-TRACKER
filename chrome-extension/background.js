@@ -100,8 +100,6 @@ const updateBlockedSitesRules = () => {
     }
   );
 };
-
-// Save time spent on sites to the backend
 const saveTimeSpent = async () => {
   const timeSpentData = Object.keys(timeSpent).map(site => ({
     site,
@@ -109,7 +107,13 @@ const saveTimeSpent = async () => {
   }));
 
   try {
+    if (timeSpentData.length === 0) {
+      console.log('No time spent data to save.');
+      return;
+    }
+
     console.log('Saving time spent data:', JSON.stringify(timeSpentData, null, 2));
+
     const response = await fetch(`${BACKEND_API_BASE}/time-tracking`, {
       method: 'POST',
       headers: {
@@ -121,7 +125,15 @@ const saveTimeSpent = async () => {
     if (!response.ok) {
       throw new Error(`Failed to save time spent: ${response.statusText}`);
     }
+
     console.log('Time spent data saved successfully');
+
+    // Clear the timeSpent data after successful save
+    for (const site of Object.keys(timeSpent)) {
+      delete timeSpent[site];
+    }
+
+    console.log('Cleared time spent data after saving.');
   } catch (error) {
     console.error('Error saving time spent:', error);
   }
@@ -129,12 +141,25 @@ const saveTimeSpent = async () => {
 
 // Monitor active tab
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
-  const tab = await chrome.tabs.get(activeInfo.tabId);
-  if (tab.url) {
-    const hostname = new URL(tab.url).hostname;
-    console.log(`Active tab changed to: ${hostname}`);
-    activeTab = hostname;
-    timeSpent[hostname] = timeSpent[hostname] || 0;
+  try {
+    const tab = await chrome.tabs.get(activeInfo.tabId);
+    if (tab.url) {
+      const url = new URL(tab.url);
+      const hostname = url.hostname;
+
+      if (hostname) {
+        console.log(`Active tab changed to: ${hostname}`);
+        activeTab = hostname;
+        timeSpent[hostname] = timeSpent[hostname] || 0; // Initialize if not present
+      } else {
+        activeTab = null; // Reset if hostname is invalid
+      }
+    } else {
+      activeTab = null; // Reset if no valid URL
+    }
+  } catch (error) {
+    console.error('Error handling tab activation:', error);
+    activeTab = null; // Reset in case of errors
   }
 });
 
@@ -145,6 +170,7 @@ setInterval(() => {
     console.log(`Time spent on ${activeTab}: ${timeSpent[activeTab]} seconds`);
   }
 }, 1000);
+
 
 // Periodically save time spent data
 setInterval(saveTimeSpent, SAVE_INTERVAL);
