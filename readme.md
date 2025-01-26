@@ -39,3 +39,7 @@ User authentication and individual tracking.
 Detailed categorization of websites.
 Gamified productivity goals and rewards.
 Support for syncing data across devices.
+
+![Image](https://github.com/user-attachments/assets/5d84b56a-1ad4-4dec-946e-dcf1ec4638a4)
+![Image](https://github.com/user-attachments/assets/a8302d07-71b1-44bc-956b-d831c7dcb409)
+![Image](https://github.com/user-attachments/assets/59d27e04-4b53-456d-a82c-8667f7854c0f)
